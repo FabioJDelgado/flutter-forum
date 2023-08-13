@@ -17,7 +17,7 @@ class UsuarioService extends ChangeNotifier{
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  Future<void> atualizarUsuario(Usuario usuario, String senha) async{
+  Future<void> atualizarUsuario(Usuario usuario, String senha, String imagemBanco) async{
     try {
       
       User? user = _auth.currentUser;
@@ -27,17 +27,21 @@ class UsuarioService extends ChangeNotifier{
 
       String uid = user!.uid;
       String urlImagem = '';
-      if(usuario.imagem.isNotEmpty){
-        File file = File(usuario.imagem);
-        Reference ref = _storage.ref().child('imagens').child('usuarios').child('$uid-perfil.jpg');
-        await ref.putFile(file);
-        urlImagem = await ref.getDownloadURL();
-      } else{
-        bool existeImagem = await verificarExistenciaImagem('/imagens/usuarios/$uid-perfil.jpg');
-        if(existeImagem){
-          Reference storageReference = _storage.ref().child('/imagens/usuarios/$uid-perfil.jpg');
-          await storageReference.delete();
+      if(usuario.imagem != imagemBanco){
+        if(usuario.imagem.isNotEmpty){
+          File file = File(usuario.imagem);
+          Reference ref = _storage.ref().child('imagens').child('usuarios').child('$uid-perfil.jpg');
+          await ref.putFile(file);
+          urlImagem = await ref.getDownloadURL();
+        } else{
+          bool existeImagem = await verificarExistenciaImagem('/imagens/usuarios/$uid-perfil.jpg');
+          if(existeImagem){
+            Reference storageReference = _storage.ref().child('/imagens/usuarios/$uid-perfil.jpg');
+            await storageReference.delete();
+          }
         }
+      } else{
+        urlImagem = imagemBanco;
       }
 
       Map<String, dynamic> data = usuario.toJson();

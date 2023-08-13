@@ -62,6 +62,7 @@ class PublicacaoService extends ChangeNotifier {
   excluirPublicacao(String idPublicacao) async{
     try{
       await _db.collection('publicacoes').doc(idPublicacao).delete();
+      await comentarioService.removerTodosPublicacao(idPublicacao);
     } on FirebaseException {
       throw PublicaoException('Erro ao excluir publicação');
     }

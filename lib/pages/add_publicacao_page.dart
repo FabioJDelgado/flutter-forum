@@ -22,7 +22,7 @@ class _AddPublicacaoPageState extends State<AddPublicacaoPage> {
     pub = TextEditingController();
   }
 
-  publicar() async {
+  publicar(BuildContext context) async {
     if(pub.text.isNotEmpty){
       Publicacao publicacao = Publicacao(texto: pub.text, uidUsuario: _auth.currentUser!.uid, data: DateTime.now());
       await context.read<PublicacaoService>().salvar(publicacao);
@@ -30,6 +30,8 @@ class _AddPublicacaoPageState extends State<AddPublicacaoPage> {
       sucessoPublicacao();
 
       pub.clear();
+      tirarFocus(context);
+
     } else{
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -47,6 +49,10 @@ class _AddPublicacaoPageState extends State<AddPublicacaoPage> {
         backgroundColor: Colors.green,
       ),
     );
+  }
+
+  tirarFocus(BuildContext context){
+    FocusScope.of(context).unfocus();
   }
 
   @override
@@ -70,7 +76,7 @@ class _AddPublicacaoPageState extends State<AddPublicacaoPage> {
               const SizedBox(height: 16), // Espaçamento entre o TextField e o botão
               ElevatedButton(
                 onPressed: () {
-                  publicar();
+                  publicar(context);
                 },
                 child: const Text(
                   "Publicar",

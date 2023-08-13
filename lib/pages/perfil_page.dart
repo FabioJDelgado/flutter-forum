@@ -28,14 +28,17 @@ class _PerfilPageState extends State<PerfilPage> {
   late String imagemPerfil = "";
   XFile? imagemArq;
   File? imagemExibir;
+  String imagemBanco = "";
 
   carregarDados() async {
+    semImagem = false;
     auth = FirebaseAuth.instance;
     String uid = auth.currentUser!.uid;
     Usuario? fetchedUsuario = await context.read<UsuarioService>().buscarUsuario(uid);
     setState(() {
       usuario = fetchedUsuario;
     });
+    limparDados();
     associar();
   }
 
@@ -45,7 +48,17 @@ class _PerfilPageState extends State<PerfilPage> {
     senha.text = '';
     if(usuario!.imagem != ''){
       imagemPerfil = usuario!.imagem;
+      imagemBanco = usuario!.imagem;
     }
+  }
+
+  limparDados(){
+    nome.text = '';
+    email.text = '';
+    senha.text = '';
+    imagemPerfil = '';
+    imagemExibir = null;
+    imagemBanco = '';
   }
 
   Future<XFile?> getImage() async {
@@ -64,9 +77,9 @@ class _PerfilPageState extends State<PerfilPage> {
     }
   }
 
-  atualizarUsuario() async {
+  atualizarUsuario(BuildContext context) async {
     try{
-      String imagemSalvar = "";
+      String imagemSalvar = imagemBanco;
       if(semImagem){
         imagemSalvar = "";
       } else if(imagemPerfil == "" && imagemExibir == null){
@@ -77,11 +90,13 @@ class _PerfilPageState extends State<PerfilPage> {
         imagemSalvar = imagemExibir!.path;
       }
       Usuario usu = Usuario(uid: usuario!.uid, nome: nome.text, email: usuario!.email, imagem: imagemSalvar);
-      await context.read<UsuarioService>().atualizarUsuario(usu, senha.text);
+      await context.read<UsuarioService>().atualizarUsuario(usu, senha.text, imagemBanco);
 
       sucessoEdicao();
 
       carregarDados();
+
+      tirarFocus(context);
 
     } on UsuarioException catch(e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -102,7 +117,9 @@ class _PerfilPageState extends State<PerfilPage> {
     );
   }
 
-  
+  tirarFocus(BuildContext context){
+    FocusScope.of(context).unfocus();
+  }
 
   @override
   void initState() {
@@ -218,7 +235,7 @@ class _PerfilPageState extends State<PerfilPage> {
                   child: ElevatedButton(
                     onPressed: () {
                       if (formKey.currentState!.validate()) {
-                        atualizarUsuario();
+                        atualizarUsuario(context);
                       }
                     },
                     child: const Row(

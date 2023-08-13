@@ -65,6 +65,17 @@ class ComentarioService extends ChangeNotifier {
     }
   }
 
+  removerTodosPublicacao(String idPublicacao) async{
+    try{
+      QuerySnapshot querySnapshot = await _db.collection('comentarios').where('uidPublicacao', isEqualTo: idPublicacao).get();
+      for (QueryDocumentSnapshot docSnapshot in querySnapshot.docs) {
+        await docSnapshot.reference.delete();
+      }
+    } on FirebaseException {
+      throw ComentarioException('Erro ao remover comentários da publicação $idPublicacao');
+    }
+  }
+
   Future<String> atualizar(String idComentario, String texto) async{
     try{
       await _db.collection('comentarios').doc(idComentario).update({"texto": texto, "data": DateTime.now()});

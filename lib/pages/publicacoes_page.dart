@@ -24,7 +24,6 @@ class _PublicacoesPageState extends State<PublicacoesPage> {
   int indexEditando = 0;
 
   List<TextEditingController> comentarioControllers = [];
-  List<FocusNode> comentarioFocus = [];
   String uidPublicacaoComentario = "";
   int indexEditandoComentario = -1;
   String acaoComentario = "novo";
@@ -53,23 +52,25 @@ class _PublicacoesPageState extends State<PublicacoesPage> {
     indexEditando = index;
   }
 
-  confirmaEdicao(String idPublicacao, int index){
+  confirmaEdicao(String idPublicacao, int index, BuildContext context){
     context.read<PublicacaoService>().editarPublicacao(idPublicacao, textoPubliNovo).then((value) => 
       setState(() {
         publicacoes[index]['texto'] = value;
       })
     );
-    fimEdicao();
+    fimEdicao(context);
     sucessoEdicao();
+    tirarFocus(context);
   }
 
-  fimEdicao(){
+  fimEdicao(BuildContext context){
     setState(() {
       editando = false;
     });
     textoPubli.text = "";
     textoPubliNovo = "";
     indexEditando = 0;
+    tirarFocus(context);
   }
 
   sucessoEdicao(){
@@ -81,7 +82,7 @@ class _PublicacoesPageState extends State<PublicacoesPage> {
     );
   }
 
-  excluirPublicacao(String idPublicacao, int index){
+  excluirPublicacao(String idPublicacao, int index, BuildContext context){
     context.read<PublicacaoService>().excluirPublicacao(idPublicacao).then((value) => 
       setState(() {
         publicacoes.removeAt(index);
@@ -89,6 +90,7 @@ class _PublicacoesPageState extends State<PublicacoesPage> {
     );
 
     sucessoExclusao();
+    tirarFocus(context);
   }
 
   sucessoExclusao(){
@@ -100,15 +102,15 @@ class _PublicacoesPageState extends State<PublicacoesPage> {
     );
   }
 
-  gerirComentarios(String idPublicacao, int indexPublicacao, String acao){
+  gerirComentarios(String idPublicacao, int indexPublicacao, String acao, BuildContext context){
     if(acao == "novo"){
-      confirmarCriarNovoComentario(idPublicacao, indexPublicacao);
+      confirmarCriarNovoComentario(idPublicacao, indexPublicacao, context);
     } else{
-      confirmarEditarComentario(idPublicacao, indexPublicacao);
+      confirmarEditarComentario(idPublicacao, indexPublicacao, context);
     }
   }
 
-  confirmarCriarNovoComentario(String idPublicacao, int indexPublicacao){
+  confirmarCriarNovoComentario(String idPublicacao, int indexPublicacao, BuildContext context){
     return showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -119,14 +121,14 @@ class _PublicacoesPageState extends State<PublicacoesPage> {
             TextButton(
               child: const Text("Cancelar"),
               onPressed: () {
-                limparEdicaoComentario(indexPublicacao);
+                limparEdicaoComentario(indexPublicacao, context);
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
               child: const Text("Adicionar"),
               onPressed: () {
-                criarNovoComentario(idPublicacao, indexPublicacao);
+                criarNovoComentario(idPublicacao, indexPublicacao, context);
                 Navigator.of(context).pop();
               },
             ),
@@ -136,7 +138,7 @@ class _PublicacoesPageState extends State<PublicacoesPage> {
     );
   }
 
-  confirmarEditarComentario(String idPublicacao, int indexPublicacao){
+  confirmarEditarComentario(String idPublicacao, int indexPublicacao, BuildContext context){
     return showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -147,14 +149,14 @@ class _PublicacoesPageState extends State<PublicacoesPage> {
             TextButton(
               child: const Text("Cancelar"),
               onPressed: () {
-                limparEdicaoComentario(indexPublicacao);
+                limparEdicaoComentario(indexPublicacao, context);
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
               child: const Text("Editar"),
               onPressed: () {
-                salvarEditarComentario(indexPublicacao);
+                salvarEditarComentario(indexPublicacao, context);
                 Navigator.of(context).pop();
               },
             ),
@@ -164,25 +166,27 @@ class _PublicacoesPageState extends State<PublicacoesPage> {
     );
   }
 
-  criarNovoComentario(String idPublicacao, int indexPublicacao){
+  criarNovoComentario(String idPublicacao, int indexPublicacao, BuildContext context){
     context.read<ComentarioService>().salvar(uidUsuarioAtual!, idPublicacao, comentarioControllers[indexPublicacao].text).then((value) => 
       setState(() {       
         publicacoes[indexPublicacao]['comentarios'].insert(0, value);
       })
     );
-    limparEdicaoComentario(indexPublicacao);
+    limparEdicaoComentario(indexPublicacao, context);
     sucessoComentario();
+    tirarFocus(context);
   }
 
-  salvarEditarComentario(int indexPublicacao){
+  salvarEditarComentario(int indexPublicacao, BuildContext context){
     int indexComentarioEditado = indexEditandoComentario;
     context.read<ComentarioService>().atualizar(uidPublicacaoComentario, comentarioControllers[indexPublicacao].text).then((value) => 
       setState(() {       
         publicacoes[indexPublicacao]['comentarios'][indexComentarioEditado]['texto'] = value;
       })
     );
-    limparEdicaoComentario(indexPublicacao);
+    limparEdicaoComentario(indexPublicacao, context);
     sucessoComentario();
+    tirarFocus(context);
   }
 
   editarComentario(uidComentario, textoEditar, int index, int index2) {
@@ -192,12 +196,12 @@ class _PublicacoesPageState extends State<PublicacoesPage> {
     acaoComentario = "editar";
   }
 
-  limparEdicaoComentario(int indexPublicacao){
+  limparEdicaoComentario(int indexPublicacao, BuildContext context){
     comentarioControllers[indexPublicacao].text = "";
-    comentarioFocus[indexPublicacao].unfocus();
     uidPublicacaoComentario = "";
     indexEditandoComentario = -1;
     acaoComentario = "novo";
+    tirarFocus(context);
   }
 
   sucessoComentario(){
@@ -209,13 +213,14 @@ class _PublicacoesPageState extends State<PublicacoesPage> {
     );
   }
 
-  excluirComentario(String idComentario, int indexPublicacao, int indexComentario){
+  excluirComentario(String idComentario, int indexPublicacao, int indexComentario, BuildContext context){
     context.read<ComentarioService>().remover(idComentario).then((value) => 
       setState(() {
         publicacoes[indexPublicacao]['comentarios'].removeAt(indexComentario);
       })
     );
     sucessoExclusaoComentario();
+    tirarFocus(context);
   }
 
   sucessoExclusaoComentario(){
@@ -225,6 +230,10 @@ class _PublicacoesPageState extends State<PublicacoesPage> {
         backgroundColor: Colors.green,
       ),
     );
+  }
+
+  tirarFocus(BuildContext context){
+    FocusScope.of(context).unfocus();
   }
 
   @override
@@ -237,7 +246,6 @@ class _PublicacoesPageState extends State<PublicacoesPage> {
   Widget build(BuildContext context) {
 
     comentarioControllers = List.generate(publicacoes.length,(_) => TextEditingController());
-    comentarioFocus = List.generate(publicacoes.length,(_) => FocusNode());
 
     return Scaffold(
       backgroundColor: Colors.grey[300],
@@ -323,7 +331,7 @@ class _PublicacoesPageState extends State<PublicacoesPage> {
                                             TextButton(
                                               child: const Text("Editar"),
                                               onPressed: () {
-                                                confirmaEdicao(publicacoes[index]['id'], index);
+                                                confirmaEdicao(publicacoes[index]['id'], index, context);
                                                 Navigator.of(context).pop();
                                               },
                                             ),
@@ -341,7 +349,7 @@ class _PublicacoesPageState extends State<PublicacoesPage> {
                               IconButton(
                                 icon:const Icon(Icons.cancel),
                                 onPressed: () {
-                                  fimEdicao();
+                                  fimEdicao(context);
                                 },
                               ),
                             IconButton(
@@ -363,7 +371,7 @@ class _PublicacoesPageState extends State<PublicacoesPage> {
                                         TextButton(
                                           child: const Text("Excluir"),
                                           onPressed: () {
-                                            excluirPublicacao(publicacoes[index]['id'], index);
+                                            excluirPublicacao(publicacoes[index]['id'], index, context);
                                             Navigator.of(context).pop();
                                           },
                                         ),
@@ -417,7 +425,6 @@ class _PublicacoesPageState extends State<PublicacoesPage> {
                       children: [
                         Expanded(
                           child: TextField(
-                            focusNode: comentarioFocus[index],
                             controller: comentarioControllers[index],
                             decoration: const InputDecoration(
                               hintText: 'Digite seu comentário...',
@@ -428,14 +435,14 @@ class _PublicacoesPageState extends State<PublicacoesPage> {
                           icon: const Icon(Icons.cancel),
                           onPressed: () {
                             setState(() {
-                              limparEdicaoComentario(index);
+                              limparEdicaoComentario(index, context);
                             });
                           },
                         ),
                         IconButton(
                           icon: const Icon(Icons.send),
                           onPressed: () {
-                            gerirComentarios(publicacoes[index]['id'], index, acaoComentario);
+                            gerirComentarios(publicacoes[index]['id'], index, acaoComentario, context);
                           },
                         ),
                       ],
@@ -546,7 +553,7 @@ class _PublicacoesPageState extends State<PublicacoesPage> {
                                                     TextButton(
                                                       child: const Text("Excluir"),
                                                       onPressed: () {
-                                                        excluirComentario(publicacoes[index]["comentarios"][index2]["id"], index, index2);
+                                                        excluirComentario(publicacoes[index]["comentarios"][index2]["id"], index, index2, context);
                                                         Navigator.of(context).pop();
                                                       },
                                                     ),
